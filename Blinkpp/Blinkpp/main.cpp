@@ -2,16 +2,6 @@
 #define setbit(var,bit) (var |= (0x01 << (bit)))
 #define clrbit(var,bit) (var &= (~(0x01 << (bit))))
 
-class C1
-{
-    public:
-    int i;
-    C1()
-    {
-        i = 44;
-    }
-};
-
 int main(void)
 {
     asm("nop\n");
