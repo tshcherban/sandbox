@@ -19,6 +19,15 @@
 #define CLR_BIT(BYTE, BIT) BYTE &= ~(1 << BIT)
 #define TST_BIT(BYTE, BIT) (BYTE & (1 << BIT))
 
+// timer 0 double frequency (interrupt trigger frequency), calculated for clock prescaler 64 and ctc mode
+#define FREQ_15_625 15
+#define FREQ_12_5 19
+#define FREQ_10_0 24
+#define FREQ_6_25 39
+#define FREQ_5_0 49
+#define FREQ_2_0 124
+#define FREQ_1_0 249
+
 inline void setup();
 
 ISR(TIMER0_COMPA_vect)
@@ -35,7 +44,7 @@ int main(void)
         TCCR0A = (1 << COM0A0) | (1 << WGM01);
         TCCR0B = (T0CL_64 << CS00);
         //TIMSK0 = (1 << OCIE0A);
-        OCR0A = 119;
+        OCR0A = FREQ_12_5;
         TCNT0 = 0;
         //sei();
 
