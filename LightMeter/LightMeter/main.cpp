@@ -30,9 +30,15 @@
 
 inline void setup();
 
+char adc;
+bool allowRun;
 ISR(TIMER0_COMPA_vect)
 {
-    //PORTD = PORTD ^ (1 << UART_PIN);
+    SET_BIT(PORTD, UART_PIN);
+    SET_BIT(ADCSRA, ADSC);
+    UDR0 = adc;
+    allowRun = true;
+    CLR_BIT(PORTD, UART_PIN);
 }
 
 int main(void)
@@ -41,23 +47,11 @@ int main(void)
 
     while (1)
     {
-        TCCR0A = (1 << COM0A0) | (1 << WGM01);
-        TCCR0B = (T0CL_64 << CS00);
-        //TIMSK0 = (1 << OCIE0A);
-        OCR0A = FREQ_12_5;
-        TCNT0 = 0;
-        //sei();
-
         while (true) {
+            while (!allowRun);
             while (TST_BIT(ADCSRA, ADSC));
-            CLR_BIT(PORTD, ADC_PIN);
-            SET_BIT(PORTD, UART_PIN);
-            SET_BIT(UCSR0A, TXC0);
-            UDR0 = ADCH;
-            SET_BIT(ADCSRA, ADSC);
-            SET_BIT(PORTD , ADC_PIN);
-            while (TST_BIT(UCSR0A, TXC0) == 0);
-            CLR_BIT(PORTD, UART_PIN);
+            adc = ADCH;
+            allowRun = false;
         }
     }
 }
@@ -74,4 +68,11 @@ void setup()
 
     ADMUX = (1 << ADLAR) | (1 << REFS1) | (1 << REFS0);
     ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADPS2) | (1 << ADPS1);
+    
+    TCCR0A = (1 << COM0A0) | (1 << WGM01);
+    TCCR0B = (T0CL_64 << CS00);
+    TIMSK0 = (1 << OCIE0A);
+    OCR0A = FREQ_15_625;
+    TCNT0 = 0;
+    sei();
 }
