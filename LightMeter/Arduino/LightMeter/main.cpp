@@ -28,16 +28,36 @@
 #define FREQ_2_0 124
 #define FREQ_1_0 249
 
+volatile uint8_t adc;
+uint16_t samplesLeft = 16000;
+
 inline void setup();
 
-char adc;
-bool allowRun;
+ISR(USART_RX_vect)
+{
+    if (UDR0 == 24)
+    {
+        SET_BIT(TIMSK0 , OCIE0A);
+        samplesLeft++;
+    }
+}
+
+ISR(ADC_vect)
+{
+    adc = ADCH;
+    UDR0 = adc;
+}
+
 ISR(TIMER0_COMPA_vect)
 {
     SET_BIT(PORTD, UART_PIN);
     SET_BIT(ADCSRA, ADSC);
-    UDR0 = adc;
-    allowRun = true;
+    --samplesLeft;
+    if (samplesLeft == 0)
+    {
+        samplesLeft = 16000;
+        CLR_BIT(TIMSK0 , OCIE0A);
+    }
     CLR_BIT(PORTD, UART_PIN);
 }
 
@@ -47,12 +67,7 @@ int main(void)
 
     while (1)
     {
-        while (true) {
-            while (!allowRun);
-            while (TST_BIT(ADCSRA, ADSC));
-            adc = ADCH;
-            allowRun = false;
-        }
+        asm("nop;");
     }
 }
 
@@ -60,19 +75,20 @@ void setup()
 {
     DDRD |= (1 << ADC_PIN) | (1 << UART_PIN) | (1 << PIND6);
 
-    UCSR0B = (1 << RXEN0) | (1 << TXEN0);
+    UCSR0B = (1 << RXEN0) | (1 << TXEN0) | (1 << RXCIE0);
     UCSR0C = (1 << USBS0) | (3 << UCSZ00);
     UCSR0A = (1 << U2X0);
     UBRR0L = 0;
     UBRR0H = 0;
 
     ADMUX = (1 << ADLAR) | (1 << REFS1) | (1 << REFS0);
-    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADPS2) | (1 << ADPS1);
+    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADIE);
     
     TCCR0A = (1 << COM0A0) | (1 << WGM01);
     TCCR0B = (T0CL_64 << CS00);
-    TIMSK0 = (1 << OCIE0A);
+    //TIMSK0 = (1 << OCIE0A);
     OCR0A = FREQ_15_625;
     TCNT0 = 0;
+
     sei();
 }
