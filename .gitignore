@@ -1,3 +1,5 @@
-debug/
-release/
-.vs/
+debug
+release
+.vs
+*.workspace
+*.pdsbak

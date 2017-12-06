@@ -15,11 +15,15 @@
 #define T0CL_EXT_FALL 6
 #define T0CL_EXT_RISE 7
 
+#define SET_BIT(BYTE, BIT) BYTE |= (1 << BIT)
+#define CLR_BIT(BYTE, BIT) BYTE &= ~(1 << BIT)
+#define TST_BIT(BYTE, BIT) (BYTE & (1 << BIT))
+
 inline void setup();
 
 ISR(TIMER0_COMPA_vect)
 {
-    PORTD = PORTD ^ (1 << UART_PIN);
+    //PORTD = PORTD ^ (1 << UART_PIN);
 }
 
 int main(void)
@@ -29,33 +33,22 @@ int main(void)
     while (1)
     {
         TCCR0A = (1 << COM0A0) | (1 << WGM01);
-        TCCR0B = (T0CL_8 << CS00);
-        TIMSK0 = (1 << OCIE0A);
+        TCCR0B = (T0CL_64 << CS00);
+        //TIMSK0 = (1 << OCIE0A);
         OCR0A = 119;
         TCNT0 = 0;
-        sei();
+        //sei();
 
-        while (1)
-        {
-            asm("nop;");
-            asm("nop;");
-            asm("nop;");
-            asm("nop;");
-        }
-
-        while (ADCSRA & (1 << ADSC));
         while (true) {
-            
-            while (ADCSRA & (1 << ADSC));
-            PORTD &= ~(1 << ADC_PIN);
-
-            PORTD |= (1 << UART_PIN);
-            UCSR0A |= 1 << TXC0;
+            while (TST_BIT(ADCSRA, ADSC));
+            CLR_BIT(PORTD, ADC_PIN);
+            SET_BIT(PORTD, UART_PIN);
+            SET_BIT(UCSR0A, TXC0);
             UDR0 = ADCH;
-            ADCSRA |= (1 << ADSC);
-            PORTD |= (1 << ADC_PIN);
-            while ((UCSR0A & (1 << TXC0)) == 0);
-            PORTD &= ~(1 << UART_PIN);
+            SET_BIT(ADCSRA, ADSC);
+            SET_BIT(PORTD , ADC_PIN);
+            while (TST_BIT(UCSR0A, TXC0) == 0);
+            CLR_BIT(PORTD, UART_PIN);
         }
     }
 }
