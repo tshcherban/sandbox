@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
+// pins for debugging purposes
 #define UART_PIN PIND5
 #define ADC_PIN PIND4
 
@@ -16,20 +17,9 @@
 
 inline void setup();
 
-bool bt;
-
 ISR(TIMER0_COMPA_vect)
 {
-    if (bt)
-    {
-        PORTD |= (1 << UART_PIN);
-        bt = false;
-    }
-    else
-    {
-        PORTD &= ~(1 << UART_PIN);
-        bt = true;
-    }
+    PORTD = PORTD ^ (1 << UART_PIN);
 }
 
 int main(void)
