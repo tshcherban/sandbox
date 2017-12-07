@@ -3,34 +3,33 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:LightMeter"
         xmlns:oxy="http://oxyplot.org/wpf"
         mc:Ignorable="d"
         Title="MainWindow" Height="350" Width="525">
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal">
-            <Button Content="Get" Width="64" Margin="4" Click="GetFromArduinoBtn_OnClick"/>
-            <Button Content="Filter" Width="64" Margin="4" Click="FilterKalmanBtn_OnClick"/>
-            <Button Content="Save" Width="64" Margin="4" Click="SaveSignalBtn_OnClick"/>
-            <Button Content="Load" Width="64" Margin="4" Click="LoadSignalBtn_OnClick"/>
-            <Button Content="FFT" Width="64" Margin="4" Click="FftBtn_OnClick"/>
+            <Button Content="Get" Width="64" Margin="4" Click="GetFromArduinoBtn_OnClick" />
+            <Button Content="Filter" Width="64" Margin="4" Click="FilterKalmanBtn_OnClick" />
+            <Button Content="Save" Width="64" Margin="4" Click="SaveSignalBtn_OnClick" />
+            <Button Content="Load" Width="64" Margin="4" Click="LoadSignalBtn_OnClick" />
+            <Button Content="FFT" Width="64" Margin="4" Click="FftBtn_OnClick" />
+            <Button Content="Sine 50+1000 Hz" Margin="4" Click="Sine50Btn_OnClick" />
         </StackPanel>
-        
-        <oxy:PlotView Grid.Row="1" x:Name="SignalPlotView"/>
+
+        <oxy:PlotView Grid.Row="1" x:Name="SignalPlotView" />
 
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="4*"/>
-                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="4*" />
+                <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
-            <oxy:PlotView Grid.Column="0" x:Name="FourierPlotView"/>
-            <ListBox Grid.Column="1" x:Name="FreqListBox"/>
+            <oxy:PlotView Grid.Column="0" x:Name="FourierPlotView" />
+            <ListBox Grid.Column="1" x:Name="FreqListBox" />
         </Grid>
-        
     </Grid>
 </Window>

@@ -22,7 +22,18 @@ namespace LightMeter
         private readonly PlotModel _fourierPlotModel;
         private readonly LineSeries _signalSeries;
         private readonly LineSeries _filteredSeries;
-        private byte[] _signal;
+
+        private byte[] Signal
+        {
+            get { return _sgn; }
+            set
+            {
+                _sgn = value;
+                _signalFiltered = value;
+            }
+        }
+        private byte[] _signalFiltered;
+        private byte[] _sgn;
 
         public MainWindow()
         {
@@ -52,12 +63,44 @@ namespace LightMeter
         {
             _filteredSeries.Points.Clear();
             var x = 0;
-            var filter = new Kalman();
-            foreach (var p in _signal.Skip(1))
-            {
-                var dout = filter.GetValue(p);
 
+/*
+            const int nzeros = 2;
+            const int npoles = 2;
+            const double gain = 1.724839960e+02;
+            
+            double[] xv = new double[nzeros + 1], yv = new double[npoles + 1];
+            
+                foreach (var i in _signal)
+                {
+                    xv[0] = xv[1];
+                    xv[1] = xv[2];
+                    xv[2] = i / gain;
+                    yv[0] = yv[1];
+                    yv[1] = yv[2];
+                    yv[2] = (xv[0] + xv[2]) + 2 * xv[1]
+                            + (-0.7965449027 * yv[0]) + (1.7733543453 * yv[1]);
+                var outv = yv[2];
+
+                    _filteredSeries.Points.Add(new DataPoint(x++, outv));
+                }*/
+            
+/*
+            var fl = new FilterButterworth(400, 15625, FilterButterworth.PassType.Lowpass, 1);
+
+            for (var i = 0; i < Signal.Length - 1; ++i)
+            {
+                fl.Update(Signal[i]);
+                _filteredSeries.Points.Add(new DataPoint(x++, fl.Value));
+                _signalFiltered[i] = (byte) fl.Value;
+            }
+            */
+            var filter = new Kalman();
+            for (var i = 0; i < Signal.Length - 1; ++i)
+            {
+                var dout = filter.GetValue(Signal[i]);
                 _filteredSeries.Points.Add(new DataPoint(x++, dout));
+                _signalFiltered[i] = (byte)dout;
             }
         }
 
@@ -65,7 +108,7 @@ namespace LightMeter
         {
             _signalSeries.Points.Clear();
             var x = 0;
-            _signalSeries.Points.AddRange(_signal.Skip(1).Select(bt => new DataPoint(x++, bt)));
+            _signalSeries.Points.AddRange(Signal.Skip(1).Select(bt => new DataPoint(x++, bt)));
 
             if (updatePlot)
             {
@@ -110,7 +153,7 @@ namespace LightMeter
 
         private async void GetFromArduinoBtn_OnClick(object sender, RoutedEventArgs e)
         {
-            _signal = await GetSignalFromArduino();
+            Signal = await GetSignalFromArduino();
 
             DrawSignal(true);
         }
@@ -124,7 +167,7 @@ namespace LightMeter
 
         private async void SaveSignalBtn_OnClick(object sender, RoutedEventArgs e)
         {
-            if (_signal == null)
+            if (Signal == null)
             {
                 MessageBox.Show("No signal", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -142,7 +185,7 @@ namespace LightMeter
                     var formatter = new BinaryFormatter();
                     using (var serializationStream = File.Create(dlg.FileName))
                     {
-                        formatter.Serialize(serializationStream, _signal);
+                        formatter.Serialize(serializationStream, Signal);
                         await serializationStream.FlushAsync();
                         serializationStream.Close();
                     }
@@ -158,7 +201,7 @@ namespace LightMeter
 
         private void LoadSignalBtn_OnClick(object sender, RoutedEventArgs e)
         {
-            if (_signal != null)
+            if (Signal != null)
             {
                 if (MessageBox.Show("Existing signal will be lost. Continue?", "Warning", MessageBoxButton.YesNoCancel,
                         MessageBoxImage.Question) != MessageBoxResult.Yes)
@@ -177,7 +220,7 @@ namespace LightMeter
                     var formatter = new BinaryFormatter();
                     using (var serializationStream = File.OpenRead(dlg.FileName))
                     {
-                        _signal = (byte[]) formatter.Deserialize(serializationStream);
+                        Signal = (byte[]) formatter.Deserialize(serializationStream);
                         serializationStream.Close();
                         DrawSignal(true);
                     }
@@ -193,7 +236,7 @@ namespace LightMeter
 
         private void FftBtn_OnClick(object sender, RoutedEventArgs e)
         {
-            var data = _signal.Skip(1).Select(i => (double) i).ToArray();
+            var data = Signal.Skip(1).Select(i => (double) i).ToArray();
 
             var x = 0;
             var filter = new Kalman();
@@ -207,6 +250,12 @@ namespace LightMeter
             var dftResComplex = dft.Execute(data);
             var dftRes = DSP.ConvertComplex.ToMagnitude(dftResComplex);
             var freqSpan = dft.FrequencySpan(15625);
+
+            var difs = new HashSet<double>();
+            for (var i = 0; i < freqSpan.Length - 1; ++i)
+                difs.Add(Math.Abs(Math.Round(freqSpan[i] - freqSpan[i + 1], 2)));
+
+            var freqAccuracy = difs.Single();
 
             var fourierSeries = new LineSeries();
 
@@ -236,7 +285,7 @@ namespace LightMeter
 
             foreach (var d in peaks.OrderByDescending(i => i.magnitude))
             {
-                FreqListBox.Items.Add($"{d.freq:F2} Hz ({perc * d.magnitude:F2} %)");
+                FreqListBox.Items.Add($@"{d.freq:F1}±{freqAccuracy/2:F1} Hz ({perc * d.magnitude:F2} %)");
             }
 
             var fourierApproximatedSeries = new LineSeries
@@ -262,7 +311,7 @@ namespace LightMeter
             _fourierPlotModel.Series.Clear();
             _fourierPlotModel.Series.Add(fourierSeries);
             _fourierPlotModel.Series.Add(peakSeries);
-            _fourierPlotModel.Series.Add(fourierApproximatedSeries);
+            //_fourierPlotModel.Series.Add(fourierApproximatedSeries);
 
             _fourierPlotModel.InvalidatePlot(true);
         }
@@ -309,32 +358,23 @@ namespace LightMeter
             }
             return peaks;
         }
-    }
 
-    public class Kalman
-    {
-        // kalman variables
-        private double varVolt = 1e-08;
-
-        private double varProcess = 0.8e-8;
-        private double Pc = 0.0;
-        private double G = 0.0;
-        private double P = 1.0;
-        private double Xp = 0.0;
-        private double Zp = 0.0;
-        private double Xe = 0.0;
-
-        public double GetValue(double value)
+        private void Sine50Btn_OnClick(object sender, RoutedEventArgs e)
         {
-            // kalman process
-            Pc = P + varProcess;
-            G = Pc / (Pc + varVolt); // kalman gain
-            P = (1 - G) * Pc;
-            Xp = Xe;
-            Zp = Xp;
-            Xe = G * (value - Zp) + Xp; // the kalman estimate of the sensor voltage
+            const int sampleRate = 15625;
+            var buffer = new byte[2000];
+            const int amplitude = 70;
+            const int zeroOffset = 128;
+            const double frequency = 50;
+            for (var n = 0; n < buffer.Length; n++)
+            {
+                buffer[n] = (byte) ((zeroOffset + (byte) (amplitude * Math.Sin((2 * Math.PI * n * frequency) / sampleRate))) +
+                                     (byte) (0 + (byte) (55 * Math.Sin((2 * Math.PI * n * frequency * 20) / sampleRate))));
+            }
 
-            return Xe;
+            Signal = buffer.ToArray();
+
+            DrawSignal(true);
         }
     }
 }
