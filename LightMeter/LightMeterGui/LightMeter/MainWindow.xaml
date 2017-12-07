@@ -11,8 +11,26 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
+            <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <Button Content="aaa" Width="64" Click="ButtonBase_OnClick"/>
-        <oxy:PlotView Grid.Row="1" x:Name="PlotView1"/>
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+            <Button Content="Get" Width="64" Margin="4" Click="GetFromArduinoBtn_OnClick"/>
+            <Button Content="Filter" Width="64" Margin="4" Click="FilterKalmanBtn_OnClick"/>
+            <Button Content="Save" Width="64" Margin="4" Click="SaveSignalBtn_OnClick"/>
+            <Button Content="Load" Width="64" Margin="4" Click="LoadSignalBtn_OnClick"/>
+            <Button Content="FFT" Width="64" Margin="4" Click="FftBtn_OnClick"/>
+        </StackPanel>
+        
+        <oxy:PlotView Grid.Row="1" x:Name="SignalPlotView"/>
+
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="4*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <oxy:PlotView Grid.Column="0" x:Name="FourierPlotView"/>
+            <ListBox Grid.Column="1" x:Name="FreqListBox"/>
+        </Grid>
+        
     </Grid>
 </Window>
