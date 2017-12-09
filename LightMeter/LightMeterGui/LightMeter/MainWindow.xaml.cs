@@ -16,8 +16,8 @@ namespace LightMeter
 {
     public partial class MainWindow
     {
-        private const string PortName = "COM3";
-        private const int BaudRate = 2000000;
+        private const string PortName = "COM11";
+        private const int BaudRate = 1000000;
         private readonly PlotModel _signalPlotModel;
         private readonly PlotModel _fourierPlotModel;
         private readonly LineSeries _signalSeries;
@@ -32,6 +32,7 @@ namespace LightMeter
                 _signalFiltered = value;
             }
         }
+
         private byte[] _signalFiltered;
         private byte[] _sgn;
 
@@ -84,7 +85,7 @@ namespace LightMeter
 
                     _filteredSeries.Points.Add(new DataPoint(x++, outv));
                 }*/
-            
+
 /*
             var fl = new FilterButterworth(400, 15625, FilterButterworth.PassType.Lowpass, 1);
 
@@ -100,7 +101,7 @@ namespace LightMeter
             {
                 var dout = filter.GetValue(Signal[i]);
                 _filteredSeries.Points.Add(new DataPoint(x++, dout));
-                _signalFiltered[i] = (byte)dout;
+                _signalFiltered[i] = (byte) dout;
             }
         }
 
@@ -124,8 +125,24 @@ namespace LightMeter
                 using (var port = new SerialPort(PortName, BaudRate))
                 {
                     port.Open();
-                    port.Write(new byte[] {24}, 0, 1);
-                    var samplesNumber = 16000;
+
+                    var samplesNumber = 6000;
+
+                    const int byteDelay = 10; // delay between bytes to allow slow simulation in proteus
+
+                    port.Write(new[] {(byte) 49}, 0, 1);
+                    await Task.Delay(byteDelay);
+                    port.Write(new[] {(byte) (samplesNumber >> 8)}, 0, 1);
+                    await Task.Delay(byteDelay);
+                    port.Write(new[] {(byte) (samplesNumber & 0xFF)}, 0, 1);
+                    await Task.Delay(byteDelay);
+
+                    for (var i = 0; i < 5; ++i)
+                    {
+                        port.Write(new[] {(byte) 0}, 0, 1);
+                        await Task.Delay(byteDelay);
+                    }
+
                     const int readSize = 2048;
                     var buffer = new byte[readSize];
                     using (var memoryStream = new MemoryStream())
@@ -285,7 +302,7 @@ namespace LightMeter
 
             foreach (var d in peaks.OrderByDescending(i => i.magnitude))
             {
-                FreqListBox.Items.Add($@"{d.freq:F1}±{freqAccuracy/2:F1} Hz ({perc * d.magnitude:F2} %)");
+                FreqListBox.Items.Add($@"{d.freq:F1}±{freqAccuracy / 2:F1} Hz ({perc * d.magnitude:F2} %)");
             }
 
             var fourierApproximatedSeries = new LineSeries
@@ -323,7 +340,7 @@ namespace LightMeter
             var threshold = max / 100 * thresholdPercentage;
 
             var peaks = new List<T>();
-            
+
             for (var i = 0; i < values.Count; i++)
             {
                 var current = values[i];
@@ -368,8 +385,10 @@ namespace LightMeter
             const double frequency = 50;
             for (var n = 0; n < buffer.Length; n++)
             {
-                buffer[n] = (byte) ((zeroOffset + (byte) (amplitude * Math.Sin((2 * Math.PI * n * frequency) / sampleRate))) +
-                                     (byte) (0 + (byte) (55 * Math.Sin((2 * Math.PI * n * frequency * 20) / sampleRate))));
+                buffer[n] = (byte) ((zeroOffset +
+                                     (byte) (amplitude * Math.Sin((2 * Math.PI * n * frequency) / sampleRate))) +
+                                    (byte) (0 + (byte) (55 * Math.Sin((2 * Math.PI * n * frequency * 20) / sampleRate)))
+                );
             }
 
             Signal = buffer.ToArray();
