@@ -109,12 +109,12 @@ void setup()
     UBRR0 = 1;
 
     ADMUX = (1 << ADLAR) | (1 << REFS1) | (1 << REFS0);
-    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADPS2) | (1 << ADIE);
+    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADPS2) | (1 << ADPS0) | (1 << ADIE);
 
     TCCR0A = /*(1 << COM0A0) |*/ (1 << WGM01);
     TCCR0B = (T0CL_64 << CS00);
     //TIMSK0 = (1 << OCIE0A);
-    OCR0A = FREQ_50_0;
+    OCR0A = FREQ_31_25;
     TCNT0 = 0;
 
     sei();
