@@ -23,6 +23,10 @@
 #define TST_BIT(BYTE, BIT) (BYTE & (1 << BIT))
 
 // timer 0 interrupt frequency, calculated for clock CPU 16 MHz, prescaler 64 and ctc mode
+#define FREQ_62_5 3
+#define FREQ_50_0 4
+#define FREQ_31_25 7
+#define FREQ_25_0 9
 #define FREQ_15_625 15
 #define FREQ_12_5 19
 #define FREQ_10_0 24
@@ -105,12 +109,12 @@ void setup()
     UBRR0 = 1;
 
     ADMUX = (1 << ADLAR) | (1 << REFS1) | (1 << REFS0);
-    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADPS2) | (1 << ADPS1) | (1 << ADIE);
+    ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADPS2) | (1 << ADIE);
 
     TCCR0A = /*(1 << COM0A0) |*/ (1 << WGM01);
     TCCR0B = (T0CL_64 << CS00);
     //TIMSK0 = (1 << OCIE0A);
-    OCR0A = FREQ_15_625;
+    OCR0A = FREQ_50_0;
     TCNT0 = 0;
 
     sei();
