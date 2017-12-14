@@ -91,6 +91,14 @@ int main(void)
             if (command[0] == 49)
             {
                 samplesNumber = ((command[1] << 8) | command[2]) + 1;
+                volatile uint16_t samplesNumber1 = 30000;
+                while (samplesNumber1 > 0)
+                {
+                    SET_BIT(ADCSRA, ADSC);
+                    while (TST_BIT(ADCSRA, ADSC));
+                    --samplesNumber1;
+                }
+
                 SET_BIT(flags, ALLOW_TRANSMIT);
                 SET_BIT(TIMSK0 , OCIE0A);
                 command[0] = 0;
@@ -110,6 +118,7 @@ void setup()
 
     ADMUX = (1 << ADLAR) | (1 << REFS1) | (1 << REFS0);
     ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADPS2) | (1 << ADPS0) | (1 << ADIE);
+    DIDR0 = 0xFF;
 
     TCCR0A = /*(1 << COM0A0) |*/ (1 << WGM01);
     TCCR0B = (T0CL_64 << CS00);

@@ -16,7 +16,7 @@ namespace LightMeter
 {
     public partial class MainWindow
     {
-        private const string PortName = "COM11";
+        private const string PortName = "COM3";
         private const int BaudRate = 1000000;
         private readonly PlotModel _signalPlotModel;
         private readonly PlotModel _fourierPlotModel;
@@ -126,7 +126,7 @@ namespace LightMeter
                 {
                     port.Open();
 
-                    var samplesNumber = 6000;
+                    var samplesNumber = 7812;
 
                     const int byteDelay = 10; // delay between bytes to allow slow simulation in proteus
 
@@ -266,7 +266,7 @@ namespace LightMeter
             dft.Initialize((uint) data.Length, 0, true);
             var dftResComplex = dft.Execute(data);
             var dftRes = DSP.ConvertComplex.ToMagnitude(dftResComplex);
-            var freqSpan = dft.FrequencySpan(15625);
+            var freqSpan = dft.FrequencySpan(31250);
 
             var difs = new HashSet<double>();
             for (var i = 0; i < freqSpan.Length - 1; ++i)
