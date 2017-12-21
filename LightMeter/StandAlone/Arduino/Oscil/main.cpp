@@ -4,9 +4,10 @@
 #include <util/delay.h>
 #include <math.h>
 
-#include "nokia5110.h"
+#include <stdio.h>
+#include <stdlib.h>
 
-volatile uint8_t adc[84];
+#include "nokia5110.h"
 
 int main(void)
 {
@@ -20,18 +21,42 @@ int main(void)
     {
         while (ADCSRA & (1<<ADSC));
         nokia_lcd_clear();
-        uint8_t pvalue = 0;
-        for (int i=0; i<84;++i)
+
+        const uint8_t samplesNumber = 200;
+        uint8_t adcData[samplesNumber];
+
+        for (int i=0; i<samplesNumber;++i)
         {
             ADCSRA |= (1 << ADSC);
             while (ADCSRA & (1<<ADSC));
             uint8_t value = (uint8_t)(((float)ADCH)/(6.0));
-            
+            adcData[i] = value;
+
+            _delay_us(162); // -38
+        }
+
+        uint8_t pvalue = 0;
+        uint8_t max = 0;
+        uint8_t min = 48;
+        for (int i=0; i<84;++i)
+        {
+            uint8_t value = adcData[i];
+
             if (i == 0)
             {
                 pvalue = value;
             }
             
+            if (max < value)
+            {
+                max = value;
+            }
+
+            if (min > value)
+            {
+                min = value;
+            }
+
             nokia_lcd_set_pixel(i, 46 - value, 1);
 
             uint8_t min = value > pvalue ? pvalue : value;
@@ -42,9 +67,58 @@ int main(void)
                 nokia_lcd_set_pixel(i, 46 - j, 1);
             }
 
-            pvalue=value;
+            pvalue = value;
+        }
+
+        uint8_t middle = (max-min)/2;
+        uint8_t zeroCross[samplesNumber-1];
+        uint8_t zeroCrossCount = 0;
+
+        for (int i=1; i<samplesNumber;++i)
+        {
+            uint8_t prevValue = adcData[i - 1];
+            uint8_t value = adcData[i];
+
+            if ((prevValue < middle && value >= middle) ||
+            (prevValue >= middle && value < middle))
+            {
+                zeroCross[zeroCrossCount] = i;
+                ++zeroCrossCount;
+            }
+        }
+
+        if (zeroCrossCount > 1)
+        {
+            uint8_t frequencies[zeroCrossCount - 1];
+            uint8_t frequenciesCount = 0;
+            for (int i=1; i<zeroCrossCount;++i)
+            {
+                float time = (zeroCross[i]-zeroCross[i-1])*0.0002;
+
+                uint8_t freq = 0.5 / time;
+                bool has = false;
+
+                for (uint8_t j=0; j < frequenciesCount && !has; ++j)
+                {
+                    has = frequencies[j] == freq;
+                }
+                if (!has)
+                {
+                    frequencies[frequenciesCount] = freq;
+                    ++frequenciesCount;
+                }
+            }
+
+            for (int i=0; i<frequenciesCount;++i)
+            {
+                nokia_lcd_set_cursor(1, i*7 + i + 1);
+                char str[16];
+
+                itoa(frequencies[i], str, 10);
+
+                nokia_lcd_write_string(str, 1);
+            }
             
-            _delay_us(300);
         }
 
         nokia_lcd_render();
