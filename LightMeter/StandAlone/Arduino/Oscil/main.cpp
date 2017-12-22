@@ -9,10 +9,28 @@
 
 #include "nokia5110.h"
 
+const uint16_t samplesNumber = 84;
+uint8_t samples[samplesNumber];
+
+uint16_t zeroCrossNumber;
+uint16_t zeroCrossCurrent;
+uint32_t zeroCrossSum;
+uint16_t zeroCrossMax;
+uint16_t zeroCrossMin;
+uint16_t zeroCrossAvg;
+
+uint8_t samplesMax;
+uint8_t samplesMin;
+uint8_t samplesAvg;
+
+void display(void);
+void stats(void);
+void getFrequency(void);
+
+
 int main(void)
 {
     nokia_lcd_init();
-    nokia_lcd_clear();
 
     ADMUX = (1 << ADLAR) | (1 << REFS0);
     ADCSRA = (1 << ADEN) | (1 << ADSC) | (1 << ADPS2) | (1 << ADPS0);
@@ -20,108 +38,117 @@ int main(void)
     while (1)
     {
         while (ADCSRA & (1<<ADSC));
-        nokia_lcd_clear();
 
-        const uint8_t samplesNumber = 200;
-        uint8_t adcData[samplesNumber];
-
-        for (int i=0; i<samplesNumber;++i)
+        for (uint16_t i=0; i<samplesNumber; ++i)
         {
             ADCSRA |= (1 << ADSC);
             while (ADCSRA & (1<<ADSC));
-            uint8_t value = (uint8_t)(((float)ADCH)/(6.0));
-            adcData[i] = value;
+            samples[i] = ADCH;
 
-            _delay_us(162); // -38
+            _delay_us(272); // -28
         }
 
-        uint8_t pvalue = 0;
-        uint8_t max = 0;
-        uint8_t min = 48;
-        for (int i=0; i<84;++i)
-        {
-            uint8_t value = adcData[i];
+        nokia_lcd_clear();
 
-            if (i == 0)
-            {
-                pvalue = value;
-            }
-            
-            if (max < value)
-            {
-                max = value;
-            }
-
-            if (min > value)
-            {
-                min = value;
-            }
-
-            nokia_lcd_set_pixel(i, 46 - value, 1);
-
-            uint8_t min = value > pvalue ? pvalue : value;
-            uint8_t max = value > pvalue ? value : pvalue;
-
-            for (uint8_t j = min; j<= max;++j)
-            {
-                nokia_lcd_set_pixel(i, 46 - j, 1);
-            }
-
-            pvalue = value;
-        }
-
-        uint8_t middle = (max-min)/2;
-        uint8_t zeroCross[samplesNumber-1];
-        uint8_t zeroCrossCount = 0;
-
-        for (int i=1; i<samplesNumber;++i)
-        {
-            uint8_t prevValue = adcData[i - 1];
-            uint8_t value = adcData[i];
-
-            if ((prevValue < middle && value >= middle) ||
-            (prevValue >= middle && value < middle))
-            {
-                zeroCross[zeroCrossCount] = i;
-                ++zeroCrossCount;
-            }
-        }
-
-        if (zeroCrossCount > 1)
-        {
-            uint8_t frequencies[zeroCrossCount - 1];
-            uint8_t frequenciesCount = 0;
-            for (int i=1; i<zeroCrossCount;++i)
-            {
-                float time = (zeroCross[i]-zeroCross[i-1])*0.0002;
-
-                uint8_t freq = 0.5 / time;
-                bool has = false;
-
-                for (uint8_t j=0; j < frequenciesCount && !has; ++j)
-                {
-                    has = frequencies[j] == freq;
-                }
-                if (!has)
-                {
-                    frequencies[frequenciesCount] = freq;
-                    ++frequenciesCount;
-                }
-            }
-
-            for (int i=0; i<frequenciesCount;++i)
-            {
-                nokia_lcd_set_cursor(1, i*7 + i + 1);
-                char str[16];
-
-                itoa(frequencies[i], str, 10);
-
-                nokia_lcd_write_string(str, 1);
-            }
-            
-        }
+        display();
+        stats();
+        getFrequency();
 
         nokia_lcd_render();
         _delay_ms(2000);
     }
+}
+
+void display(void)
+{
+    uint8_t pvalue = 0;
+    for (uint8_t i = 0; i < 84; ++i)
+    {
+        uint8_t value = samples[i];
+        value = (uint8_t)(((float)value)/(6.0));
+
+        if (i == 0)
+        {
+            pvalue = value;
+        }
+
+        nokia_lcd_set_pixel(i, 46 - value, 1);
+
+        uint8_t minl = value > pvalue ? pvalue : value;
+        uint8_t maxl = value > pvalue ? value : pvalue;
+
+        for (uint8_t j = minl; j<= maxl; ++j)
+        {
+            nokia_lcd_set_pixel(i, 46 - j, 1);
+        }
+
+        pvalue = value;
+    }
+}
+
+void stats(void)
+{
+    samplesMax = 0;
+    samplesMin = 255;
+    for (uint16_t i=0; i<samplesNumber; ++i)
+    {
+        uint8_t value = samples[i];
+
+        if (samplesMax < value)
+        {
+            samplesMax = value;
+        }
+
+        if (samplesMin > value)
+        {
+            samplesMin = value;
+        }
+    }
+
+    samplesAvg = (samplesMax-samplesMin)/2;
+}
+
+void getFrequency(void)
+{
+    uint16_t zeroCrossPrev = 0;
+    zeroCrossSum = 0;
+    zeroCrossNumber = 0;
+    for (uint16_t i = 1; i < samplesNumber; ++i)
+    {
+        uint8_t prevValue = samples[i - 1];
+        uint8_t value = samples[i];
+
+        if ((prevValue < samplesAvg && value >= samplesAvg) ||
+        (prevValue >= samplesAvg && value < samplesAvg))
+        {
+            zeroCrossCurrent = i - zeroCrossPrev;
+
+            if (zeroCrossMax < zeroCrossCurrent)
+            {
+                zeroCrossMax  = zeroCrossCurrent;
+            }
+
+            if (zeroCrossMin > zeroCrossCurrent)
+            {
+                zeroCrossMin = zeroCrossCurrent;
+            }
+            
+            zeroCrossSum += zeroCrossCurrent;
+            zeroCrossNumber++;
+        }
+    }
+
+    if (zeroCrossNumber <= 1)
+    {
+        return;
+    }
+
+    zeroCrossAvg = zeroCrossSum / zeroCrossNumber;
+
+    int frequency = (0.5 / ((float)zeroCrossAvg * 0.0003));
+
+    nokia_lcd_set_cursor(1, 1);
+    char str[16];
+    itoa((int)frequency, str, 10);
+    nokia_lcd_write_string(str, 1);
 }
