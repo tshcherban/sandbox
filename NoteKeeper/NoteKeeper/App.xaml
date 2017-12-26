@@ -4,6 +4,126 @@
              xmlns:local="clr-namespace:NoteKeeper"
              StartupUri="MainWindow.xaml">
     <Application.Resources>
-         
+        <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <Style TargetType="{x:Type local:AutoCompleteSearchControl}">
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="local:AutoCompleteSearchControl">
+                        <Popup
+                            AllowsTransparency="True"
+                            StaysOpen="False"
+                            Placement="Relative"
+                            HorizontalOffset="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HorizontalOffset, Mode=OneWay}"
+                            IsOpen="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=IsOpen, Mode=TwoWay}"
+                            PlacementTarget="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=PlacementTarget, Mode=OneWay}"
+                            PopupAnimation="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=PopupAnimation, Mode=OneWay}"
+                            VerticalOffset="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=VerticalOffset, Mode=OneWay}">
+                            <Grid x:Name="MainGrid">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="*" />
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Border HorizontalAlignment="Left" BorderThickness="1"
+                                        BorderBrush="DimGray"
+                                        Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                                    <Grid MaxWidth="280" Width="280" Height="59">
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="28" />
+                                            <RowDefinition Height="31" />
+                                        </Grid.RowDefinitions>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Margin="5,2" VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                                                    Orientation="Horizontal" Grid.Row="0" Grid.Column="0"
+                                                    Grid.ColumnSpan="2">
+                                            <TextBlock
+                                                Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=HintString, Mode=OneWay}" />
+                                            <TextBlock Margin="2,0,0,0" x:Name="FoundResultTextBlock"
+                                                       Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=FoundResultMessage, Mode=OneWay}"
+                                                       Foreground="Green" />
+                                        </StackPanel>
+                                        <Border Grid.Row="1" Grid.Column="0" Background="Brown" Margin="2,3" Width="25"
+                                                Height="25" VerticalAlignment="Center" HorizontalAlignment="Center" />
+                                        <!--<Image Source="{StaticResource Find}" Grid.Row="1" Grid.Column="0"  Margin="2,3" Width="25" Height="25" VerticalAlignment="Center" HorizontalAlignment="Center"/>-->
+                                        <Button HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="3,1"
+                                                Width="25" Height="25" Grid.Row="0" Grid.Column="2"
+                                                Command="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=ButtonCommand}"
+                                                CommandParameter="{Binding ElementName=FilteredList, Path=SelectedItem}"
+                                                Style="{StaticResource {x:Static ToolBar.ButtonStyleKey}}">
+                                            <!--<Image Source="{StaticResource Goto}" Stretch="Uniform" Margin="1"/>-->
+                                            <Border Background="Brown" Margin="1" />
+                                        </Button>
+                                        <TextBox VerticalAlignment="Center" Height="23" x:Name="FilteringTextBox"
+                                                 Margin="3,2" Grid.Row="1" Grid.ColumnSpan="2" Grid.Column="1"
+                                                 Text="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=FilteringString, UpdateSourceTrigger=PropertyChanged}" />
+                                    </Grid>
+                                </Border>
+                                <Grid Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Height="300"
+                                      Background="Transparent" Margin="33,-4,0,0">
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="*" />
+                                    </Grid.RowDefinitions>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border BorderThickness="1"
+                                            Visibility="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=AreFilteredStringsVisible, Converter={StaticResource BoolToVisibilityConverter}}"
+                                            BorderBrush="Gray"
+                                            Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+                                        <ListView VirtualizingStackPanel.IsVirtualizing="False"
+                                                  HorizontalContentAlignment="Stretch" BorderThickness="0"
+                                                  MinWidth="243" MaxHeight="280" MaxWidth="500" x:Name="FilteredList"
+                                                  ItemsSource="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=FilteredStrings}"
+                                                  SelectedItem="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=SelectedFilteredItem}">
+                                            <ListView.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Grid Margin="3,2" HorizontalAlignment="Stretch">
+                                                        <Grid.ColumnDefinitions>
+                                                            <ColumnDefinition MaxWidth="200" />
+                                                            <ColumnDefinition Width="*" />
+                                                        </Grid.ColumnDefinitions>
+                                                        <TextBlock Text="{Binding Name}" Grid.Column="0"
+                                                                   HorizontalAlignment="Left"
+                                                                   ToolTip="{Binding FullPath}" />
+                                                        <TextBlock x:Name="PathTextBlock" Foreground="DimGray"
+                                                                   Text="{Binding Path, StringFormat=(in {0})}"
+                                                                   Margin="12,0,0,0" Grid.Column="1"
+                                                                   HorizontalAlignment="Right" />
+                                                    </Grid>
+                                                    <DataTemplate.Triggers>
+                                                        <DataTrigger Binding="{Binding Path}" Value="">
+                                                            <Setter TargetName="PathTextBlock" Property="Visibility"
+                                                                    Value="Collapsed" />
+                                                        </DataTrigger>
+                                                    </DataTemplate.Triggers>
+                                                </DataTemplate>
+                                            </ListView.ItemTemplate>
+                                        </ListView>
+
+                                    </Border>
+                                </Grid>
+
+                            </Grid>
+                        </Popup>
+                        <ControlTemplate.Triggers>
+                            <DataTrigger
+                                Binding="{Binding RelativeSource={RelativeSource Self}, Path=FilteredStrings.Count}"
+                                Value="0">
+                                <Setter TargetName="FoundResultTextBlock" Property="Foreground" Value="Red" />
+                            </DataTrigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
     </Application.Resources>
 </Application>
