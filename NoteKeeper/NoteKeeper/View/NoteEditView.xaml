@@ -1,0 +1,23 @@
+﻿<Window x:Class="NoteKeeper.View.NoteEditView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:NoteKeeper.View"
+        xmlns:vm="clr-namespace:NoteKeeper.ViewModel"
+        mc:Ignorable="d"
+        Title="NoteEditView" Height="300" Width="300"
+        
+        d:DataContext="{d:DesignInstance d:Type=vm:NoteEditViewModel, IsDesignTimeCreatable=False}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+        <TextBox Text="{Binding NoteViewModel.Header, UpdateSourceTrigger=PropertyChanged}" />
+        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Margin="4" Width="64" Content="OK" IsDefault="True" Click="Button_Click"/>
+            <Button Margin="4" Width="64" Content="Cancel" IsCancel="True" Click="Button_Click_1"/>
+        </StackPanel>
+    </Grid>
+</Window>

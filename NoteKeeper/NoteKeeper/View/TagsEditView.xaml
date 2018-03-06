@@ -1,0 +1,24 @@
+﻿<Window x:Class="NoteKeeper.View.TagsEditView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:vm="clr-namespace:NoteKeeper.ViewModel"
+        mc:Ignorable="d"
+        Title="TagsEditView" Height="300" Width="300"
+        d:DataContext="{d:DesignInstance d:Type=vm:TagsEditVM}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <StackPanel Orientation="Horizontal">
+            <Button Margin="4" Content="Add" Command="{Binding AddTagCmd}"/>
+        </StackPanel>
+        <DataGrid Grid.Row="1" AutoGenerateColumns="False" ItemsSource="{Binding Path=Tags}">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Tag" Binding="{Binding Header}" Width="*"/>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Window>
