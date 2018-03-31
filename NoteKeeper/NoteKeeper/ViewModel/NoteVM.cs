@@ -1,4 +1,5 @@
 ﻿using NoteKeeper.Model;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 
 namespace NoteKeeper
@@ -7,9 +8,9 @@ namespace NoteKeeper
     {
         private readonly NoteModel _model;
 
-        public NoteVM(NoteModel model)
+        public NoteVM(NoteModel model, IEnumerable<TagVM> tagVms)
         {
-            Tags = new ObservableCollection<TagVM>();
+            Tags = new ObservableCollection<TagVM>(tagVms);
             _model = model;
         }
 

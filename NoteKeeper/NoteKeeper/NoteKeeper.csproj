@@ -58,7 +58,9 @@
     <Compile Include="BoolToVisibilityConverter.cs" />
     <Compile Include="FuzzySearchHelper.cs" />
     <Compile Include="HighlightTextControl.cs" />
+    <Compile Include="Model\ModelSaver.cs" />
     <Compile Include="Model\NoteModel.cs" />
+    <Compile Include="Model\RootModel.cs" />
     <Compile Include="ViewModel\MainVM.cs" />
     <Compile Include="Model\TagModel.cs" />
     <Compile Include="ViewModel\NoteEditViewModel.cs" />

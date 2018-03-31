@@ -2,9 +2,20 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:NoteKeeper"
+             xmlns:noteKeeper="clr-namespace:NoteKeeper"
              StartupUri="View\MainWindow.xaml">
     <Application.Resources>
         <local:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+
+        <DataTemplate x:Key="SmallTagTemplate" DataType="{x:Type noteKeeper:TagVM}">
+            <Border CornerRadius="4" BorderThickness="1" Margin="1,1,0,0"
+                                                            Padding="1,0,1,0"
+                                                            BorderBrush="Green">
+                <noteKeeper:HighlightTextControl Text="{Binding Header}"
+                                                 HighlightParts="{Binding ElementName=RootWnd, Path=DataContext.Terms}" />
+            </Border>
+        </DataTemplate>
+
         <Style TargetType="{x:Type local:AutoCompleteSearchControl}">
             <Setter Property="Template">
                 <Setter.Value>

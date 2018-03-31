@@ -17,18 +17,24 @@
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
 
-        <TextBox Grid.Row="0" Margin="4"
+        <TextBox Grid.Row="0" Grid.ColumnSpan="2" Margin="4"
                  Text="{Binding BasicFilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
 
-        <StackPanel Grid.Row="1" Orientation="Horizontal">
+        <StackPanel Grid.Row="1" Grid.ColumnSpan="2" Orientation="Horizontal">
             <Button Margin="4" Content="Add note" Command="{Binding AddNoteCommand}" />
+            <Button Margin="4" Content="Edit note" Command="{Binding EditNoteCommand}" />
             <Button Margin="4" Content="Save" Command="{Binding SaveCommand}" />
             <Button Margin="4" Content="Load" Command="{Binding LoadCommand}" />
             <Button Margin="4" Content="Tags" Command="{Binding TagListCommand}" />
         </StackPanel>
 
-        <ListBox Grid.Row="2" ItemsSource="{Binding NotesView}" HorizontalContentAlignment="Stretch">
+        <ListBox Grid.Row="2"
+                 ItemsSource="{Binding NotesView}" HorizontalContentAlignment="Stretch">
             <ListBox.ItemTemplate>
                 <DataTemplate DataType="{x:Type noteKeeper:NoteVM}">
                     <Border>
@@ -48,17 +54,7 @@
                             <ContentControl Grid.Row="1" x:Name="TagsContent" Content="{Binding}" >
                                 <ContentControl.ContentTemplate>
                                     <DataTemplate>
-                                        <ItemsControl ItemsSource="{Binding Tags}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate DataType="{x:Type noteKeeper:TagVM}">
-                                                    <Border CornerRadius="4" BorderThickness="1" Margin="1,1,0,0"
-                                                            Padding="1,0,1,0"
-                                                            BorderBrush="Green">
-                                                        <noteKeeper:HighlightTextControl Text="{Binding Header}"
-                                                                                         HighlightParts="{Binding ElementName=RootWnd, Path=DataContext.Terms}" />
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
+                                        <ItemsControl ItemsSource="{Binding Tags}" ItemTemplate="{StaticResource SmallTagTemplate}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <StackPanel Orientation="Horizontal" IsItemsHost="True" />
@@ -75,5 +71,8 @@
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
+
+        <TextBox Grid.Row="2" Grid.Column="1" AcceptsReturn="True" AcceptsTab="True" IsReadOnly="True"
+                 Text="{Binding NotesView.CurrentItem.Content}"></TextBox>
     </Grid>
 </Window>

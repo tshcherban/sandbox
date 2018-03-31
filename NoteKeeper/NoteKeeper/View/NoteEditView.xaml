@@ -3,19 +3,52 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:NoteKeeper.View"
         xmlns:vm="clr-namespace:NoteKeeper.ViewModel"
+        xmlns:noteKeeper="clr-namespace:NoteKeeper"
         mc:Ignorable="d"
         Title="NoteEditView" Height="300" Width="300"
-        
-        d:DataContext="{d:DesignInstance d:Type=vm:NoteEditViewModel, IsDesignTimeCreatable=False}">
+        d:DataContext="{d:DesignInstance d:Type=vm:NoteEditViewModel, IsDesignTimeCreatable=False}"
+        x:Name="NoteEditWnd">
     <Grid>
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="4*"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
+        
         <TextBox Text="{Binding NoteViewModel.Header, UpdateSourceTrigger=PropertyChanged}" />
-        <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right">
+
+        <TextBox Grid.Row="1" Text="{Binding NoteViewModel.Content, UpdateSourceTrigger=PropertyChanged}"
+                 AcceptsReturn="True" AcceptsTab="True"/>
+
+        <TextBox Grid.Row="2" Margin="4"
+                 Text="{Binding BasicFilterText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+        <ListBox Grid.Row="3" ItemsSource="{Binding TagsView}" HorizontalContentAlignment="Stretch">
+            <ListBox.ItemTemplate>
+                <DataTemplate DataType="{x:Type noteKeeper:TagVM}">
+                    <Border>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                            </Grid.RowDefinitions>
+
+                            <ContentControl Grid.Row="0" x:Name="HeaderContent" >
+                                <ContentControl.Content>
+                                    <noteKeeper:HighlightTextControl Text="{Binding Header}"
+                                                                         HighlightParts="{Binding ElementName=NoteEditWnd, Path=DataContext.Terms}" />
+                                </ContentControl.Content>
+                            </ContentControl>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
             <Button Margin="4" Width="64" Content="OK" IsDefault="True" Click="Button_Click"/>
             <Button Margin="4" Width="64" Content="Cancel" IsCancel="True" Click="Button_Click_1"/>
         </StackPanel>

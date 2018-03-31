@@ -6,13 +6,15 @@ namespace NoteKeeper.Model
 {
     public sealed class NoteModel
     {
-        public Guid Id { get; set; }
+        public Guid Id { get; set; } = Guid.NewGuid();
 
         public string Header { get; set; }
 
         public string Content { get; set; }
 
-        [JsonProperty(ItemIsReference = true)]
-        public List<TagModel> Tags { get; } = new List<TagModel>();
+        public List<Guid> TagIds { get; private set; } = new List<Guid>();
+
+        [JsonIgnore]
+        public bool Modified { get; set; }
     }
 }

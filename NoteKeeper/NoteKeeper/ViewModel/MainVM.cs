@@ -30,46 +30,59 @@ namespace NoteKeeper
             TagsStr = new ObservableCollection<string>(Tags.Select(i => i.Header));
 
             AddNoteCommand = new RelayCommand(AddNoteCommand_Execute);
+            EditNoteCommand = new RelayCommand(EditNoteCmd_Execute, EditNoteCmd_CanExecute);
             SaveCommand = new RelayCommand(SaveCmd_Execute);
             LoadCommand = new RelayCommand(LoadCmd_Execute);
             TagListCommand = new RelayCommand(TagListCmd_Execute);
+
+            _modelSaver = new FileSystemJsonModelSaver(FilePath);
+        }
+
+        private bool EditNoteCmd_CanExecute(object obj)
+        {
+            return NotesView?.CurrentItem != null;
+        }
+
+        private void EditNoteCmd_Execute(object obj)
+        {
+            var noteVm = NotesView?.CurrentItem as NoteVM;
+            if (noteVm == null)
+                return;
+
+            var vm = new NoteEditViewModel(noteVm, Tags);
+            var view = new NoteEditView { DataContext = vm };
+            view.ShowDialog();
         }
 
         private void TagListCmd_Execute(object obj)
         {
-            var vm = new TagsEditVM(Tags, t => model.Tags.Add(t));
+            var vm = new TagsEditVM(Tags, t => _model.Tags.Add(t));
             var view = new TagsEditView { DataContext = vm };
             view.ShowDialog();
         }
 
         const string FilePath = "data.json";
 
-        RootModel model;
-        JsonSerializerSettings settings = new JsonSerializerSettings
-        {
-            Formatting = Formatting.Indented,
-            PreserveReferencesHandling = PreserveReferencesHandling.All
-        };
+        RootModel _model;
+        IModelSaver _modelSaver;
 
         private void LoadCmd_Execute(object obj)
         {
-            if (File.Exists(FilePath))
-                model = JsonConvert.DeserializeObject<RootModel>(File.ReadAllText(FilePath), settings);
-            else
-                model = new RootModel();
+            Notes.Clear();
+            Tags.Clear();
 
-            foreach (var tag in model.Tags)
+            _model = _modelSaver.LoadOrNew();
+
+            foreach (var tag in _model.Tags)
                 Tags.Add(new TagVM(tag));
 
-            foreach (var note in model.Notes)
-                Notes.Add(new NoteVM(note));
-
+            foreach (var note in _model.Notes)
+                Notes.Add(new NoteVM(note, Tags.Where(t => note.TagIds.Contains(t.Id))));
         }
 
         private void SaveCmd_Execute(object obj)
         {
-            var s = JsonConvert.SerializeObject(model, settings);
-            File.WriteAllText(FilePath, s);
+            _modelSaver.Save(_model);
         }
 
         private void NotesViewOnCurrentChanged(object sender, EventArgs eventArgs)
@@ -78,11 +91,11 @@ namespace NoteKeeper
 
         private void AddNoteCommand_Execute(object obj)
         {
-            var noteVM = new NoteVM(new NoteModel { Id = Guid.NewGuid() })
+            var noteVM = new NoteVM(new NoteModel(), Enumerable.Empty<TagVM>())
             {
                 Header = DateTime.Now.ToString("G"),
             };
-            var vm = new NoteEditViewModel(noteVM);
+            var vm = new NoteEditViewModel(noteVM, Tags);
             var view = new NoteEditView
             {
                 DataContext = vm
@@ -90,7 +103,7 @@ namespace NoteKeeper
             if (view.ShowDialog() ?? false)
             {
                 Notes.Add(noteVM);
-                model.Notes.Add(noteVM.Model);
+                _model.Notes.Add(noteVM.Model);
             }
         }
 
@@ -142,6 +155,10 @@ namespace NoteKeeper
                 }
             }
         }
+
+
+
+        public ICommand EditNoteCommand { get; }
 
         public ICommand AddNoteCommand { get; }
 
